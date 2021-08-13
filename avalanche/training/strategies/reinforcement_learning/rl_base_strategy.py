@@ -35,6 +35,7 @@ class RLBaseStrategy(BaseStrategy):
             criterion=nn.MSELoss(),
             rollouts_per_step: int = 1, max_steps_per_rollout: int = -1,
             updates_per_step: int = 1, device='cpu',
+            replay_memory_dataset: bool = False,
             plugins: Optional[Sequence[StrategyPlugin]] = [],
             discount_factor: float = 0.99, evaluator=default_rl_logger,
             eval_every=-1, eval_episodes: int = 1):

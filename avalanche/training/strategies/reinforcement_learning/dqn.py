@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from .rl_base_strategy import RLBaseStrategy, Timestep
-from .buffers import Rollout, ReplayMemory
+from .buffers import ExperienceReplayAvalancheDataset, Rollout, ReplayMemory
 from torch.optim.optimizer import Optimizer
 from typing import Union, Optional, Sequence, List
 from avalanche.training.plugins.strategy_plugin import StrategyPlugin
@@ -58,7 +58,7 @@ class DQNStrategy(RLBaseStrategy):
         for exp_step in self.per_experience_steps:
             assert target_net_update_interval.unit == exp_step.unit, "You must express the target network interval using the same unit as the training lenght"
 
-        self.replay_memory: ReplayMemory = None
+        # self.replay_memory: ReplayMemory = None
         self.replay_init_size = replay_memory_init_size
         self.replay_size = replay_memory_size
         self.batch_dim = batch_size
@@ -100,6 +100,16 @@ class DQNStrategy(RLBaseStrategy):
                     torch.add(target_param.data, param.data,
                               alpha=self.polyak_update_tau,
                               out=target_param.data)
+    @property
+    def replay_memory(self)->ExperienceReplayAvalancheDataset:
+        # if self.experience is None:
+        #     return None
+        # TODO: adapted dataset?
+        return self.experience.dataset
+
+    @replay_memory.setter
+    def replay_memory(self, value):
+        self.experience.dataset = value
 
     def before_training_exp(self, **kwargs):
         # compute linear decay rate from specified fraction and specified timestep unit 
@@ -111,9 +121,13 @@ class DQNStrategy(RLBaseStrategy):
         rollouts = self.rollout(
             self.environment, n_rollouts=-1, max_steps=self.replay_init_size //
             self.n_envs)
+
         if self.replay_memory is None or self.reset_replay:
-            self.replay_memory = ReplayMemory(
+            self.replay_memory = ExperienceReplayAvalancheDataset(
                 size=self.replay_size, n_envs=self.n_envs)
+            # update adapted dataset pointer for compatibility with other avl plugins
+            self.adapted_dataset = self.experience.dataset
+            print("Replay memory created", self.replay_memory)
 
         self.replay_memory.add_rollouts(rollouts)
 

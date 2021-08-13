@@ -5,6 +5,9 @@ from typing import Callable, Dict, Union, Optional, Sequence, Any, List
 import random
 import numpy as np
 import torch
+from avalanche.benchmarks.utils.avalanche_dataset import AvalancheDataset
+from avalanche.training.strategies.reinforcement_learning.buffers import ExperienceReplayAvalancheDataset, ReplayMemory
+
 
 
 def rl_experience_factory(
@@ -44,6 +47,7 @@ class RLScenario(GenericCLScenario['RLExperience']):
         self.n_envs = n_parallel_envs
         self.train_task_labels = list(range(len(envs)))
         self.eval_task_labels = list(range(len(eval_envs)))
+
         # keep track of environment wrappers
         self._wrappers_generators = wrappers_generators
 
@@ -210,6 +214,8 @@ class RLExperience(GenericExperience[RLScenario,
         super().__init__(origin_stream, current_experience)
         self.env = env
         self.n_envs = n_envs
+        # must be instatiated by strategy if they make use of memory
+        self._experience_memory:ExperienceReplayAvalancheDataset = None
 
     @property
     def environment(self) -> Env:
@@ -222,3 +228,11 @@ class RLExperience(GenericExperience[RLScenario,
     @property
     def task_labels(self) -> List[int]:
         return [self.scenario.train_task_labels[self.current_experience]]
+
+    @property
+    def dataset(self) -> AvalancheDataset:
+        return self._experience_memory
+    
+    @dataset.setter
+    def dataset(self, value):
+        self._experience_memory = value

@@ -85,7 +85,7 @@ class Array2Tensor(ObservationWrapper):
 
 class FireResetWrapper(gym.Wrapper):
     """
-    Adapated from https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/atari_wrappers.py.
+    Adapted from https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/atari_wrappers.py.
     Take action on reset for environments that are fixed until firing.
 
     :param env: the environment to wrap
@@ -124,11 +124,11 @@ class ClipRewardWrapper(gym.RewardWrapper):
 
 
 class ReducedActionSpaceWrapper(gym.ActionWrapper):
-
+    
     def __init__(
             self, env: gym.Env,
-            action_space_dim: int,
-            action_mapping: Dict[int, int] = {1: 2, 2: 3}) -> None:
+            action_space_dim:int,
+            action_mapping: Dict[int, int]={1: 2, 2: 3}) -> None:
         """Re-maps action space to specified values. This is particularly useful with 
            atari environments such as Pong having a default action space which is 
            unnecessarily big (only 3 actions have effect).
@@ -193,3 +193,68 @@ class VectorizedEnvWrapper(Wrapper):
     def reset(self) -> Any:
         obs = super().reset()
         return self._unsqueeze_obs(obs)
+
+# class HabitatObservationsWrapper(ObservationWrapper):
+#     """Filters habitat output to only include type of observations specified. 
+#         Useful if only a singular type of observation is needed (e.g. RGB) images.
+#         If more observations are fed at once (e.g. RGB+DEPTH) images are stacked on 
+#         the channel dimension.
+#     Args:
+#         ObservationWrapper ([type]): [description]
+#     """
+# # 
+#     def __init__(self, env: gym.Env, normalize_rgb: bool=True, selected_sensors: Union[str, List[str]]='rgb') -> None:
+#         super().__init__(env)
+#         # habitat returns rgba images by default
+#         if type(selected_sensors) is str:
+#             selected_sensors=[selected_sensors]
+#         spaces = {}
+#         res = None
+#         for sensor in selected_sensors:
+#             # habitat returns rgba images by default
+#             if sensor == 'rgb':
+#                 sensor = 'rgba'
+#             space = env.observation_space.get(sensor, None)
+#             if space is None:
+#                 raise ValueError(f'Unknown sensor {sensor}')
+#             # remove duplicates too
+#             spaces[sensor] = (space.low.min(), space.high.max(), space.shape)
+
+#         # all visual sensors must have same res 
+#         res = space.shape[:2]
+#         self._sensors = selected_sensors
+#         self.normalize_rgb = normalize_rgb
+#         if normalize:
+#             self.observation_space = Box(
+#                 low=0.,
+#                 high=1.,
+#                 shape=[[s[2][-1] for s in spaces.values() if len(s[2])==3], *res],
+#                 dtype=np.float32,
+#             ) 
+#         else:
+#             self.observation_space = Box(
+#                 low=old_space.low.min(),
+#                 high=old_space.high.max(),
+#                 shape=[3, *old_space.shape[:2]],
+#                 dtype=old_space.dtype,
+#             ) 
+#     def _get_obs(self, obs, key, n_channels=None, normalize=False):
+#         obs = obs[key][..., :n_channels]
+#         if normalize:
+#             return obs.astype(np.float32)/255.
+
+#     def observation(self, observation):
+#         # select rgb and make it channel first
+#         # habitat also returns a collided bool to indicate whether we hit something
+#         obs_ch = []
+#         for s in self._sensors:
+#             if s == 'rgb':
+#                 obs = self._get_obs(observation, 'rgba', 3, self.normalize_rgb).transpose(2, 0, 1)
+#             elif s == 'rgba':
+#                 obs = self._get_obs(observation, 'rgba', normalize=self.normalize_rgb).transpose(2, 0, 1)
+#             else:
+#                 # add channel dim
+#                 obs = observation[s].reshape(1, *obs.shape)
+#             obs_ch.append(obs)
+
+#         return np.concatenate(obs_ch, axis=0)

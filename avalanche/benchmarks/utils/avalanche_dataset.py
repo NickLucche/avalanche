@@ -53,6 +53,7 @@ class AvalancheDatasetType(Enum):
     CLASSIFICATION = auto()
     REGRESSION = auto()
     SEGMENTATION = auto()
+    RL_EXPERIENCE_REPLAY = auto()
 
 
 class AvalancheDataset(IDatasetWithTargets[T_co, TTargetType], Dataset[T_co]):
@@ -205,9 +206,12 @@ class AvalancheDataset(IDatasetWithTargets[T_co, TTargetType], Dataset[T_co]):
         """
         The type of this dataset (UNDEFINED, CLASSIFICATION, ...).
         """
+        # TODO: 
+        self.targets = []
+        if self.dataset_type != AvalancheDatasetType.RL_EXPERIENCE_REPLAY:
+            self.targets: Sequence[TTargetType] = self._initialize_targets_sequence(
+                dataset, targets, dataset_type, targets_adapter)
 
-        self.targets: Sequence[TTargetType] = self._initialize_targets_sequence(
-            dataset, targets, dataset_type, targets_adapter)
         """
         A sequence of values describing the label of each pattern contained in
         the dataset.

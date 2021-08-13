@@ -1,8 +1,13 @@
+from avalanche.benchmarks.utils.avalanche_dataset import AvalancheDataset, AvalancheDatasetType
 import torch
 from typing import Union, List
 from dataclasses import dataclass, field
 import numpy as np
 import random
+
+from torch.utils.data.dataset import Dataset
+
+
 
 
 @dataclass
@@ -199,7 +204,7 @@ class Rollout:
 
 
 @dataclass
-class ReplayMemory:
+class ReplayMemory(Dataset):
     # like a Rollout but with time-indipendent Steps 
     """ Max number of Steps contained inside memory. When trying to add a new Step and size is reached, a previous Step is replaced. """
     size: int
@@ -264,3 +269,17 @@ class ReplayMemory:
 
     def __len__(self):
         return len(self._memory)
+
+    def __getitem__(self, idx):
+        return self._memory[idx]
+
+class ExperienceReplayAvalancheDataset(AvalancheDataset):
+
+    def __init__(self, size:int, n_envs:int=1, initial_steps:List[Step] = []):
+        self.memory = ReplayMemory(size, n_envs, initial_steps)
+        super().__init__(self.memory, dataset_type=AvalancheDatasetType.RL_EXPERIENCE_REPLAY, )
+
+    def __getattr__(self, name:str):
+        return getattr(self.memory, name) 
+
+        

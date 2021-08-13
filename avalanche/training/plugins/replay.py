@@ -66,6 +66,7 @@ class ReplayPlugin(StrategyPlugin):
         """
         if len(self.ext_mem) == 0:
             return
+        print("EXPERIENCE DATASET", strategy.experience.dataset, strategy.adapted_dataset)
         strategy.dataloader = ReplayDataLoader(
             strategy.adapted_dataset,
             AvalancheConcatDataset(self.ext_mem.values()),
@@ -75,6 +76,7 @@ class ReplayPlugin(StrategyPlugin):
             shuffle=shuffle)
 
     def after_training_exp(self, strategy: "BaseStrategy", **kwargs):
+        print("Adding replay memory samples to memory!")
         self.storage_policy(strategy, **kwargs)
 
 
